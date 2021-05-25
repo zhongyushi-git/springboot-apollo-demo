@@ -1,52 +1,80 @@
 version: '3.7'
 services:
-  apollo-configservice:
-    network_mode: host
+  apollo-configservice-dev:
+    container_name: apollo-configservice-dev
     restart: always
     image: apolloconfig/apollo-configservice:1.8.1
-    container_name: apollo-configservice
     ports:
       - 8080:8080
     environment:
-      SPRING_DATASOURCE_URL: jdbc:mysql://192.168.86.128:3306/ApolloConfigDB?characterEncoding=utf8
-      SPRING_DATASOURCE_USERNAME: admin
-      SPRING_DATASOURCE_PASSWORD: 1234
+      SPRING_DATASOURCE_URL: ${DATASOURCE_URL_CONFIG_DEV}
+      SPRING_DATASOURCE_USERNAME: ${DATASOURCE_USERNAME}
+      SPRING_DATASOURCE_PASSWORD: ${DATASOURCE_PASSWORD}
+      EUREKA_INSTANCE_IP_ADDRESS: ${EUREKA_INSTANCE_IP_ADDRESS}
     volumes:
       - /tmp/logs:/opt/logs
 
-  apollo-adminservice:
-    network_mode: host
+  apollo-adminservice-dev:
+    container_name: apollo-adminservice-dev
     depends_on:
-      - apollo-configservice
+      - apollo-configservice-dev
     restart: always
     image: apolloconfig/apollo-adminservice:1.8.1
-    container_name: apollo-adminservice
-    ports:
-      - 8090:8090
+    expose:
+      - '8090'
     environment:
-      SPRING_DATASOURCE_URL: jdbc:mysql://192.168.86.128:3306/ApolloConfigDB?characterEncoding=utf8
-      SPRING_DATASOURCE_USERNAME: admin
-      SPRING_DATASOURCE_PASSWORD: 1234
+      SPRING_DATASOURCE_URL: ${DATASOURCE_URL_CONFIG_DEV}
+      SPRING_DATASOURCE_USERNAME: ${DATASOURCE_USERNAME}
+      SPRING_DATASOURCE_PASSWORD: ${DATASOURCE_PASSWORD}
+    volumes:
+      - /tmp/logs:/opt/logs
+
+  apollo-configservice-pro:
+    container_name: apollo-configservice-pro
+    restart: always
+    image: apolloconfig/apollo-configservice:1.8.1
+    ports:
+      - 8081:8081
+    environment:
+      #修改容器启动的端口号
+      SERVER_PORT: '8081'
+      SPRING_DATASOURCE_URL: ${DATASOURCE_URL_CONFIG_PRO}
+      SPRING_DATASOURCE_USERNAME: ${DATASOURCE_USERNAME}
+      SPRING_DATASOURCE_PASSWORD: ${DATASOURCE_PASSWORD}
+      EUREKA_INSTANCE_IP_ADDRESS: ${EUREKA_INSTANCE_IP_ADDRESS}
+    volumes:
+      - /tmp/logs:/opt/logs
+
+  apollo-adminservice-pro:
+    container_name: apollo-adminservice-pro
+    depends_on:
+      - apollo-configservice-pro
+    restart: always
+    image: apolloconfig/apollo-adminservice:1.8.1
+    expose:
+      - '8090'
+    environment:
+      SPRING_DATASOURCE_URL: ${DATASOURCE_URL_CONFIG_PRO}
+      SPRING_DATASOURCE_USERNAME: ${DATASOURCE_USERNAME}
+      SPRING_DATASOURCE_PASSWORD: ${DATASOURCE_PASSWORD}
     volumes:
       - /tmp/logs:/opt/logs
 
   apollo-portal:
-    network_mode: host
+    container_name: apollo-portal
     depends_on:
-      - apollo-adminservice
+      - apollo-adminservice-dev
+      - apollo-adminservice-pro
     restart: always
     image: apolloconfig/apollo-portal:1.8.1
-    container_name: apollo-portal
     ports:
       - 8070:8070
     environment:
-      SPRING_DATASOURCE_URL: jdbc:mysql://192.168.86.128:3306/ApolloPortalDB?characterEncoding=utf8
-      SPRING_DATASOURCE_USERNAME: admin
-      SPRING_DATASOURCE_PASSWORD: 1234
-      APOLLO_PORTAL_ENVS: dev
-      DEV_META: http://192.168.86.128:8080
+      SPRING_DATASOURCE_URL: ${DATASOURCE_URL_PORTAL}
+      SPRING_DATASOURCE_USERNAME: ${DATASOURCE_USERNAME}
+      SPRING_DATASOURCE_PASSWORD: ${DATASOURCE_PASSWORD}
+      APOLLO_PORTAL_ENVS: ${APOLLO_PORTAL_ENVS}
+      DEV_META: ${DEV_META}
+      PRO_META: ${PRO_META}
     volumes:
       - /tmp/logs:/opt/logs
-
-
-
